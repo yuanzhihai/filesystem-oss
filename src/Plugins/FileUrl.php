@@ -11,7 +11,7 @@ class FileUrl extends AbstractPlugin
      *
      * @return string
      */
-    public function getMethod()
+    public function getMethod(): string
     {
         return 'getUrl';
     }

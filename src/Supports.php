@@ -2,7 +2,6 @@
 
 namespace yzh52521\Flysystem\Oss;
 
-use League\Flysystem\Config;
 
 class Supports
 {

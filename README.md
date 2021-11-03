@@ -1,10 +1,10 @@
 ## Aliyun OSS Adapter For Flysystem.
 
-AliYun OSS Storage adapter for flysystem - a PHP filesystem abstraction.
+AliYun OSS Storage adapter for flysystem - a PHP filesystem 2.0 abstraction.
 
 ## Installation
-
 composer require yzh52521/flysystem-oss
+
 
 ## Usage
 
@@ -21,14 +21,13 @@ $aliyun = new OssAdapter([
     // 'connectTimeout' => 10,
     // 'isCName'        => false,
     // 'token'          => '',
+    //'proxy' => null,
 ]);
 $filesystem = new Filesystem($aliyun);
 
 
 // Write Files
 $filesystem->write('path/to/file.txt', 'contents');
-// get RAW data from aliYun OSS
-$raw = $aliyun->supports->getFlashData();
 
 // Write Use writeStream
 $stream = fopen('local/path/to/file.txt', 'r+');
@@ -49,20 +48,14 @@ $contents = $filesystem->read('path/to/file.txt');
 // Delete Files
 $filesystem->delete('path/to/file.txt');
 
-// Rename Files
-$filesystem->rename('filename.txt', 'newname.txt');
-
 // Copy Files
 $filesystem->copy('filename.txt', 'duplicate.txt');
 
 
 // list the contents (not support recursive now)
 $filesystem->listContents('path', false);
+
+string $flysystem->getUrl('file.md'); 
 ```
 
-```php
-// 说明：此方法返回从阿里云接口返回的原生数据，仅可调用一次
-// DESC: this function return AliYun RAW data
-$raw = $aliyun->supports->getFlashData();
-```
 
