@@ -3,7 +3,8 @@
 AliYun OSS Storage adapter for flysystem - a PHP filesystem 2.0 abstraction.
 
 ## Installation
-composer require yzh52521/flysystem-oss
+composer require yzh52521/flysystem-oss 2.0
+
 
 
 ## Usage
