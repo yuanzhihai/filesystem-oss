@@ -265,7 +265,7 @@ class OssAdapter extends AbstractAdapter
      */
     public function getUrl($path)
     {
-        return 'https://' . $this->bucket . '.' . $this->endpoint . ltrim($path, '/');
+        return 'https://' . $this->bucket . '.' . $this->endpoint . '/'. ltrim($path, '/');
     }
 
     /**
