@@ -1,9 +1,13 @@
 ## Aliyun OSS Adapter For Flysystem.
 
-AliYun OSS Storage adapter for flysystem - a PHP filesystem 2.0 abstraction.
+AliYun OSS Storage adapter for flysystem - a PHP filesystem 3.0 abstraction.
+
+# Requirement
+
+- PHP >= 8.0
 
 ## Installation
-composer require yzh52521/flysystem-oss 2.0
+composer require yzh52521/flysystem-oss 3.0
 
 
 
@@ -13,48 +17,47 @@ composer require yzh52521/flysystem-oss 2.0
 use League\Flysystem\Filesystem;
 use yzh52521\Flysystem\Oss\OssAdapter;
 
-$aliyun = new OssAdapter([
-    'accessId'       => '<aliyun access id>',
-    'accessSecret'   => '<aliyun access secret>',
-    'bucket'         => '<bucket name>',
-    'endpoint'       => '<endpoint address>',
-    // 'timeout'        => 3600,
-    // 'connectTimeout' => 10,
-    // 'isCName'        => false,
-    // 'token'          => '',
-    //'proxy' => null,
-]);
-$filesystem = new Filesystem($aliyun);
+$config = [
+    "access_id" => "**************",             // Required, YourAccessKeyId
+    "access_secret" => "********************",   // Required, YourAccessKeySecret
+    "endpoint" => "oss-cn-shanghai.aliyuncs.com",// Required, Endpoint
+    "bucket" => "bucket-name",                   // Required, Bucket
+    "prefix" => "",
+    "options" => []
+];
+
+$adapter = new OssAdapter($config);
+$flysystem = new Filesystem($adapter);
 
 
-// Write Files
-$filesystem->write('path/to/file.txt', 'contents');
+$flysystem->write('file.md', 'contents');
+$flysystem->writeStream('foo.md', fopen('file.md', 'r'));
 
-// Write Use writeStream
-$stream = fopen('local/path/to/file.txt', 'r+');
-$result = $filesystem->writeStream('path/to/file.txt', $stream);
-if (is_resource($stream)) {
-    fclose($stream);
+$fileExists = $flysystem->fileExists('foo.md');
+$flysystem->copy('foo.md', 'baz.md');
+$flysystem->move('baz.md', 'bar.md');
+$flysystem->delete('bar.md');
+$has = $flysystem->has('bar.md');
+
+$read = $flysystem->read('file.md');
+$readStream = $flysystem->readStream('file.md');
+
+$flysystem->createDirectory('foo/');
+$directoryExists = $flysystem->directoryExists('foo/');
+$flysystem->deleteDirectory('foo/');
+
+$listContents = $flysystem->listContents('/', true);
+$listPaths = [];
+foreach ($listContents as $listContent) {
+    $listPaths[] = $listContent->path();
 }
 
-// Update Files
-$filesystem->update('path/to/file.txt', 'new contents');
+$lastModified = $flysystem->lastModified('file.md');
+$fileSize = $flysystem->fileSize('file.md');
+$mimeType = $flysystem->mimeType('file.md');
 
-// Check if a file exists
-$exists = $filesystem->has('path/to/file.txt');
-
-// Read Files
-$contents = $filesystem->read('path/to/file.txt');
-
-// Delete Files
-$filesystem->delete('path/to/file.txt');
-
-// Copy Files
-$filesystem->copy('filename.txt', 'duplicate.txt');
-
-
-// list the contents (not support recursive now)
-$filesystem->listContents('path', false);
+$flysystem->setVisibility('file.md', 'private');
+$visibility = $flysystem->visibility('file.md');
 
 string $flysystem->getUrl('file.md'); 
 ```
