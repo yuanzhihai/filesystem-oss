@@ -248,7 +248,7 @@ class OssAdapter implements FilesystemAdapter
      */
     public function getUrl(string $path): string
     {
-        return 'https://' . $this->bucket . '.' . $this->endpoint . '/'.ltrim($path, '/');
+        return 'https://' . $this->bucket . '.' . $this->endpoint . '/' . ltrim($path, '/');
     }
 
     /**
