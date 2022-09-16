@@ -74,6 +74,11 @@ class OssAdapter implements FilesystemAdapter
         return $this->client->doesObjectExist($this->bucket, $path);
     }
 
+    public function directoryExists(string $path): bool
+    {
+        return $this->client->doesObjectExist($this->bucket, $path);
+    }
+
     public function write(string $path, string $contents, Config $config): void
     {
         $this->client->putObject($this->bucket, $path, $contents, $this->getOssOptions($config));
@@ -83,6 +88,7 @@ class OssAdapter implements FilesystemAdapter
     {
         $this->client->putObject($this->bucket, $path, $contents, $this->getOssOptions($config));
     }
+
 
     /**
      * @throws OssException
@@ -204,7 +210,7 @@ class OssAdapter implements FilesystemAdapter
                         'path' => $value->getPrefix(),
                     ];
                     if ($deep) {
-                        $result = array_merge($result, $this->listContents($value->getPrefix(), $deep));
+                        $result = array_merge($result, (array)$this->listContents($value->getPrefix(), $deep));
                     }
                 }
             }
