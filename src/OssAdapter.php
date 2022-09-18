@@ -185,18 +185,24 @@ class OssAdapter implements FilesystemAdapter
      */
     public function deleteDirectory(string $path): void
     {
-        $result = $this->listDirObjects($path, true);
-        $keys   = array_column($result['objects'], 'key');
-        if ( $keys === [] ) {
-            return;
-        }
-
         try {
-            foreach ( array_chunk($keys, 1000) as $items ) {
-                $this->client->deleteObjects($this->bucket, $items);
+            $contents = $this->listContents($path, false);
+            $files = [];
+            foreach ($contents as $i => $content) {
+                if ($content instanceof DirectoryAttributes) {
+                    $this->deleteDirectory($content->path());
+                    continue;
+                }
+                $files[] = $this->prefixer->prefixPath($content->path());
+                if ($i && 0 == $i % 100) {
+                    $this->client->deleteObjects($this->bucket, $files);
+                    $files = [];
+                }
             }
-        } catch ( OssException $ossException ) {
-            throw UnableToDeleteDirectory::atLocation($path, $ossException->getMessage(), $ossException);
+            !empty($files) && $this->client->deleteObjects($this->bucket, $files);
+            $this->client->deleteObject($this->bucket, $this->prefixer->prefixDirectoryPath($path));
+        } catch (OssException $exception) {
+            throw UnableToDeleteDirectory::atLocation($path, $exception->getErrorCode(), $exception);
         }
     }
 
@@ -369,86 +375,5 @@ class OssAdapter implements FilesystemAdapter
         return new FileAttributes($path, $size, null, $timestamp, $mimetype);
     }
 
-    /**
-     * File list core method.
-     *
-     * @return array{prefix: array<string>, objects: array<array{key?: string, prefix: ?string, content-length?: string, size?: int, last-modified?: string, content-type?: string}>}
-     */
-    public function listDirObjects(string $dirname = '', bool $recursive = false): array
-    {
-        $prefix = trim($this->prefixer->prefixPath($dirname), '/');
-        $prefix = empty($prefix) ? '' : $prefix . '/';
-
-        $nextMarker = '';
-
-        $result = [];
-
-        $options = [
-            'prefix'    => $prefix,
-            'max-keys'  => self::MAX_KEYS,
-            'delimiter' => $recursive ? '' : self::DELIMITER,
-        ];
-        while ( true ) {
-            $options['marker'] = $nextMarker;
-            $model             = $this->client->listObjects($this->bucket, $options);
-            $nextMarker        = $model->getNextMarker();
-            $objects           = $model->getObjectList();
-            $prefixes          = $model->getPrefixList();
-            $result            = $this->processObjects($result, $objects, $dirname);
-
-            $result = $this->processPrefixes($result, $prefixes);
-            if ( $nextMarker === '' ) {
-                break;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param array{prefix?: array<string>, objects: array<array{key?: string, prefix: string|null, content-length?: string, size?: int, last-modified?: string, content-type?: string}>} $result
-     * @param array<\OSS\Model\PrefixInfo>|null $prefixes
-     *
-     * @return array{prefix: array<string>, objects: array<array{key?: string, prefix: string|null, content-length?: string, size?: int, last-modified?: string, content-type?: string}>}
-     */
-    private function processPrefixes(array $result, ?array $prefixes): array
-    {
-        if ( !empty($prefixes) ) {
-            foreach ( $prefixes as $prefix ) {
-                $result['prefix'][] = $prefix->getPrefix();
-            }
-        } else {
-            $result['prefix'] = [];
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param array{prefix?: array<string>, objects?: array<array{key?: string, prefix: string|null, content-length?: string, size?: int, last-modified?: string, content-type?: string}>} $result
-     * @param array<\OSS\Model\ObjectInfo>|null $objects
-     *
-     * @return array{prefix?: array<string>, objects: array<array{key?: string, prefix: string|null, content-length?: string, size?: int, last-modified?: string, content-type?: string}>}
-     */
-    private function processObjects(array $result, ?array $objects, string $dirname): array
-    {
-        $result['objects'] = [];
-        if ( !empty($objects) ) {
-            foreach ( $objects as $object ) {
-                $result['objects'][] = [
-                    'prefix'              => $dirname,
-                    'key'                 => $object->getKey(),
-                    'last-modified'       => $object->getLastModified(),
-                    'size'                => $object->getSize(),
-                    OssClient::OSS_ETAG   => $object->getETag(),
-                    'x-oss-storage-class' => $object->getStorageClass(),
-                ];
-            }
-        } else {
-            $result['objects'] = [];
-        }
-
-        return $result;
-    }
 
 }
