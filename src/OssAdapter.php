@@ -60,11 +60,11 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             $this->bucket     = $config['bucket'];
-            $accessId         = $config['access_id'];
-            $accessSecret     = $config['access_secret'];
+            $accessId         = $config['accessId'];
+            $accessSecret     = $config['accessSecret'];
             $endpoint         = $config['endpoint'] ?? 'oss-cn-hangzhou.aliyuncs.com';
             $prefix           = $config['prefix'] ?? '';
-            $options          = $config['options'];
+            $options          = $config['options'] ?? [];
             $this->client     = new OssClient(
                 $accessId,
                 $accessSecret,
@@ -74,7 +74,7 @@ class OssAdapter implements FilesystemAdapter
             $this->prefixer   = new PathPrefixer($prefix);
             $this->options    = new OssOptions($options);
             $this->visibility = new VisibilityConverter();
-        } catch (OssException $e) {
+        } catch ( OssException $e ) {
             throw $e;
         }
     }
@@ -86,7 +86,7 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             return $this->client->doesObjectExist($this->bucket, $this->prefixer->prefixPath($path), $this->options->getOptions());
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             throw UnableToCheckExistence::forLocation($path, $exception);
         }
     }
@@ -98,7 +98,7 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             return $this->client->doesObjectExist($this->bucket, $this->prefixer->prefixDirectoryPath($path), $this->options->getOptions());
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             throw UnableToCheckExistence::forLocation($path, $exception);
         }
     }
@@ -110,7 +110,7 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             $this->client->putObject($this->bucket, $this->prefixer->prefixPath($path), $contents, $this->options->mergeConfig($config, $this->visibility));
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             throw UnableToWriteFile::atLocation($path, $exception->getErrorCode(), $exception);
         }
     }
@@ -122,7 +122,7 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             $this->client->uploadStream($this->bucket, $this->prefixer->prefixPath($path), $contents, $this->options->mergeConfig($config, $this->visibility));
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             throw UnableToWriteFile::atLocation($path, $exception->getErrorCode(), $exception);
         }
     }
@@ -134,7 +134,7 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             return $this->client->getObject($this->bucket, $this->prefixer->prefixPath($path), $this->options->getOptions());
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             throw UnableToReadFile::fromLocation($path, $exception->getErrorCode(), $exception);
         }
     }
@@ -149,7 +149,7 @@ class OssAdapter implements FilesystemAdapter
         try {
             $options = array_merge($this->options->getOptions(), [OssClient::OSS_FILE_DOWNLOAD => $stream]);
             $this->client->getObject($this->bucket, $this->prefixer->prefixPath($path), $options);
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             fclose($stream);
             throw UnableToReadFile::fromLocation($path, $exception->getErrorCode(), $exception);
         }
@@ -165,7 +165,7 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             $this->client->deleteObject($this->bucket, $this->prefixer->prefixPath($path), $this->options->getOptions());
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             throw UnableToDeleteFile::atLocation($path, $exception->getErrorCode(), $exception);
         }
     }
@@ -186,22 +186,22 @@ class OssAdapter implements FilesystemAdapter
 
         try {
             $bool = true;
-            while ($bool) {
+            while ( $bool ) {
                 $result  = $this->client->listObjects($this->bucket, $options);
                 $objects = array();
-                if (count($result->getObjectList()) > 0) {
-                    foreach ($result->getObjectList() as $info) {
+                if ( count($result->getObjectList()) > 0 ) {
+                    foreach ( $result->getObjectList() as $info ) {
                         $objects[] = $info->getKey();
                     }
                     $this->client->deleteObjects($this->bucket, $objects);
                 }
-                if ($result->getIsTruncated() === 'true') {
+                if ( $result->getIsTruncated() === 'true' ) {
                     $option[OssClient::OSS_MARKER] = $result->getNextMarker();
                 } else {
                     $bool = false;
                 }
             }
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             throw UnableToDeleteDirectory::atLocation($path, $exception->getErrorCode(), $exception);
         }
     }
@@ -213,7 +213,7 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             $this->client->createObjectDir($this->bucket, $this->prefixer->prefixDirectoryPath($path), $this->options->mergeConfig($config, $this->visibility));
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             throw UnableToCreateDirectory::dueToFailure($path, $exception);
         }
     }
@@ -225,7 +225,7 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             $this->client->putObjectAcl($this->bucket, $this->prefixer->prefixPath($path), $this->visibility->visibilityToAcl($visibility), $this->options->getOptions());
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             throw UnableToSetVisibility::atLocation($path, $exception->getErrorCode(), $exception);
         }
     }
@@ -237,7 +237,7 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             $acl = $this->client->getObjectAcl($this->bucket, $this->prefixer->prefixPath($path), $this->options->getOptions());
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             throw UnableToRetrieveMetadata::visibility($path, $exception->getErrorCode(), $exception);
         }
 
@@ -276,7 +276,7 @@ class OssAdapter implements FilesystemAdapter
         $directory = $this->prefixer->prefixDirectoryPath($path);
 
         $nextMarker = '';
-        while (true) {
+        while ( true ) {
             $options = array_merge(
                 $this->options->getOptions(),
                 [
@@ -286,17 +286,17 @@ class OssAdapter implements FilesystemAdapter
             );
             try {
                 $listObjectInfo = $this->client->listObjects($this->bucket, $options);
-            } catch (OssException $exception) {
+            } catch ( OssException $exception ) {
                 throw new \yzh52521\Flysystem\Oss\OssException("", 0, $exception);
             }
             $nextMarker = $listObjectInfo->getNextMarker();
 
             $listObject = $listObjectInfo->getObjectList();
-            if (!empty($listObject)) {
-                foreach ($listObject as $objectInfo) {
+            if ( !empty($listObject) ) {
+                foreach ( $listObject as $objectInfo ) {
                     $objectPath         = $this->prefixer->stripPrefix($objectInfo->getKey());
                     $objectLastModified = strtotime($objectInfo->getLastModified());
-                    if (substr($objectPath, 0, -1) == '/') {
+                    if ( substr($objectPath, 0, -1) == '/' ) {
                         yield new DirectoryAttributes($objectPath);
                     } else {
                         yield new FileAttributes($objectPath, $objectInfo->getSize(), null, $objectLastModified);
@@ -304,21 +304,21 @@ class OssAdapter implements FilesystemAdapter
                 }
             }
 
-            if ($deep == true) {
+            if ( $deep == true ) {
                 $prefixList = $listObjectInfo->getPrefixList();
-                foreach ($prefixList as $prefixInfo) {
+                foreach ( $prefixList as $prefixInfo ) {
                     $subPath = $this->prefixer->stripDirectoryPrefix($prefixInfo->getPrefix());
-                    if ($subPath == $path) {
+                    if ( $subPath == $path ) {
                         break;
                     }
                     $contents = $this->listContents($subPath, true);
-                    foreach ($contents as $content) {
+                    foreach ( $contents as $content ) {
                         yield $content;
                     }
                 }
             }
 
-            if ($listObjectInfo->getIsTruncated() !== "true") {
+            if ( $listObjectInfo->getIsTruncated() !== "true" ) {
                 break;
             }
         }
@@ -352,7 +352,7 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             $this->client->copyObject($this->bucket, $this->prefixer->prefixPath($source), $this->bucket, $this->prefixer->prefixPath($destination), $this->options->getOptions());
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             UnableToCopyFile::fromLocationTo($source, $destination, $exception);
         }
     }
@@ -365,7 +365,7 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             $result = $this->client->getObjectMeta($this->bucket, $this->prefixer->prefixPath($path), $this->options->getOptions());
-        } catch (OssException $exception) {
+        } catch ( OssException $exception ) {
             UnableToRetrieveMetadata::create($path, "metadata", $exception->getErrorCode(), $exception);
         }
 
