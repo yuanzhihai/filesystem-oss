@@ -70,8 +70,8 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             $this->bucket     = $config['bucket'];
-            $accessId         = $config['accessId'];
-            $accessSecret     = $config['accessSecret'];
+            $accessId         = $config['access_id'];
+            $accessSecret     = $config['access_secret'];
             $endpoint         = $config['endpoint'] ?? 'oss-cn-hangzhou.aliyuncs.com';
             $prefix           = $config['prefix'] ?? '';
             $options          = $config['options'] ?? [];

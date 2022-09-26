@@ -23,6 +23,7 @@ $config = [
     "endpoint" => "oss-cn-shanghai.aliyuncs.com",// Required, Endpoint
     "bucket" => "bucket-name",                   // Required, Bucket
     "prefix" => "",
+    'isCName'=>'',
     "options" => []
 ];
 
