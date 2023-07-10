@@ -51,6 +51,13 @@ class OssAdapter implements FilesystemAdapter
     protected $options;
 
     /**
+     * @var string|null
+     */
+    protected $cdnUrl = null;
+
+    protected $isCName;
+
+    /**
      * @var PathPrefixer
      */
     protected PathPrefixer $prefixer;
@@ -76,6 +83,7 @@ class OssAdapter implements FilesystemAdapter
             $prefix           = $config['prefix'] ?? '';
             $options          = $config['options'] ?? [];
             $isCName          = $config['isCName'];
+            $cdnUrl           = $config['cdnUrl'] ?? '';
             $this->client     = new OssClient(
                 $accessId,
                 $accessSecret,
@@ -86,9 +94,19 @@ class OssAdapter implements FilesystemAdapter
             $this->prefixer   = new PathPrefixer( $prefix );
             $this->options    = new OssOptions( $options );
             $this->visibility = new VisibilityConverter();
+            $this->cdnUrl     = $cdnUrl;
+            $this->isCName    = $isCName;
         } catch ( OssException $e ) {
             throw $e;
         }
+    }
+
+    /**
+     * 设置cdn的url.
+     */
+    public function setCdnUrl(?string $url)
+    {
+        $this->cdnUrl = $url;
     }
 
     /**
@@ -125,6 +143,25 @@ class OssAdapter implements FilesystemAdapter
         } catch ( OssException $exception ) {
             throw UnableToWriteFile::atLocation( $path,$exception->getErrorCode(),$exception );
         }
+    }
+
+    /**
+     * sign url.
+     *
+     * @return false|\OSS\Http\ResponseCore|string
+     */
+    public function getTemporaryUrl($path,$timeout,array $options = [],string $method = OssClient::OSS_HTTP_GET)
+    {
+        $path = $this->prefixer->prefixPath( $path );
+
+        $options = array_merge( $this->options->getOptions(),$options );
+        try {
+            $path = $this->client->signUrl( $this->bucket,$path,$timeout,$method,$options );
+        } catch ( OssException $exception ) {
+            return false;
+        }
+
+        return $path;
     }
 
     /**
@@ -344,7 +381,10 @@ class OssAdapter implements FilesystemAdapter
      */
     public function getUrl(string $path): string
     {
-        return 'https://'.$this->bucket.'.'.$this->endpoint.'/'.ltrim( $path,'/' );
+        if (!is_null( $this->cdnUrl )) {
+            return rtrim( $this->cdnUrl,'/' ).'/'.ltrim( $path,'/' );
+        }
+        return $this->normalizeHost().ltrim( $path,'/' );
     }
 
     /**
@@ -377,5 +417,17 @@ class OssAdapter implements FilesystemAdapter
         return new FileAttributes( $path,$size,null,$timestamp,$mimetype );
     }
 
+    /**
+     * normalize Host.
+     */
+    protected function normalizeHost(): string
+    {
+        if ($this->isCName) {
+            $domain = $this->endpoint;
+        } else {
+            $domain = $this->bucket.'.'.$this->endpoint;
+        }
+        return rtrim( $domain,'/' ).'/';
+    }
 
 }
