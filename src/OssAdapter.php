@@ -83,7 +83,7 @@ class OssAdapter implements FilesystemAdapter
             $prefix           = $config['prefix'] ?? '';
             $options          = $config['options'] ?? [];
             $isCName          = $config['isCName'];
-            $cdnUrl           = $config['cdnUrl'] ?? '';
+            $cdnUrl           = $config['cdnUrl'] ?? null;
             $this->client     = new OssClient(
                 $accessId,
                 $accessSecret,
@@ -427,7 +427,7 @@ class OssAdapter implements FilesystemAdapter
         } else {
             $domain = $this->bucket.'.'.$this->endpoint;
         }
-        return rtrim( $domain,'/' ).'/';
+        return 'https://'.rtrim( $domain,'/' ).'/';
     }
 
 }
