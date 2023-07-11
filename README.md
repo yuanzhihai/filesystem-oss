@@ -18,6 +18,7 @@ $aliyun = new OssAdapter([
     'accessSecret'   => '<aliyun access secret>',
     'bucket'         => '<bucket name>',
     'endpoint'       => '<endpoint address>',
+    'cdnUrl'         =>'',
     // 'timeout'        => 3600,
     // 'connectTimeout' => 10,
     // 'isCName'        => false,
