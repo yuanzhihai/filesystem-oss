@@ -24,7 +24,7 @@ $config = [
     "bucket" => "bucket-name",                   // Required, Bucket
     "prefix" => "",
     'isCName'=> true, // 如果 isCname 为 false，endpoint 应配置 oss 提供的域名如：`oss-cn-beijing.aliyuncs.com`，cname 或 cdn 请自行到阿里 oss 后台配置并绑定 bucket
-    'cndUrl' =>''
+    'cdnUrl' =>''
     "options"=> [
        
     ]
